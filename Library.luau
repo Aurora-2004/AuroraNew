@@ -210,7 +210,7 @@ function library.new(library, name)
     TabIco.BackgroundTransparency = 1.000
     TabIco.BorderSizePixel = 0
     TabIco.Size = UDim2.new(0, 24, 0, 24)
-    TabIco.Image = icon and string.format("http://www.roblox.com/asset/?id%s", icon) or "http://www.roblox.com/asset/?id=6026568198"
+    TabIco.Image = string.format("http://www.roblox.com/asset/?id%s", icon) or "http://www.roblox.com/asset/?id=6026568198"
     TabIco.ImageTransparency = 0.2
     
     TabText.Name = "TabText"
