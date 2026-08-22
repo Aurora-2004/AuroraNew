@@ -1,3 +1,4 @@
+
 local library = {}
 library.currentTab = nil
 library.flags = {}
@@ -210,7 +211,7 @@ function library.new(library, name)
     TabIco.BackgroundTransparency = 1.000
     TabIco.BorderSizePixel = 0
     TabIco.Size = UDim2.new(0, 24, 0, 24)
-    TabIco.Image = string.format("http://www.roblox.com/asset/?id%s", icon) or "http://www.roblox.com/asset/?id=6026568198"
+    TabIco.Image = string.format("http://www.roblox.com/asset/?id=%s", icon or 6026568198)
     TabIco.ImageTransparency = 0.2
     
     TabText.Name = "TabText"
@@ -322,17 +323,8 @@ function library.new(library, name)
       ObjsL.Parent = Objs
       ObjsL.SortOrder = Enum.SortOrder.LayoutOrder
       ObjsL.Padding = UDim.new(0, 8)     
-      
-      local open = true
-      SectionToggle.MouseButton1Click:Connect(function()
-        open = not open
-        Section.Size = UDim2.new(0.981000006, 0, 0, open and 36 + ObjsL.AbsoluteContentSize.Y + 8 or 36)
-        SectionOpened.ImageTransparency = (open and 0 or 1)
-        SectionOpen.ImageTransparency = (open and 1 or 0)
-      end)
 
       ObjsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        if not open then return end
         Section.Size = UDim2.new(0.981000006, 0, 0, 36 + ObjsL.AbsoluteContentSize.Y + 8)
       end)
 
@@ -376,8 +368,6 @@ function library.new(library, name)
         local enabled = enabled or false
         assert(text, "No text provided")
         assert(flag, "No flag provided")
-
-        library.flags[flag] = enabled
 
         local ToggleModule = Instance.new("Frame")
         local ToggleBtn = Instance.new("TextButton")
@@ -441,6 +431,8 @@ function library.new(library, name)
           end,
           Module = ToggleModule
         }
+
+        if enabled then funcs:SetState() end
 
         ToggleBtn.MouseButton1Click:Connect(function()
           funcs:SetState()
@@ -1061,9 +1053,8 @@ end
 return library
 
 --[[
-
 local ui = library:new("Finishedddd")
-local tab1 = ui:tab("Hello")
+local tab1 = ui:tab("Hello", "6034503369")
 
 local section1 = tab1:section("UwU")
 local section2 = tab1:section("OwO")
@@ -1071,6 +1062,7 @@ local section2 = tab1:section("OwO")
 section1:AddButton("FAGGOT", function() print"ff" end)
 section1:AddButton("NIGGER", function() print"ff" end)
 section1:AddToggle("BITCH", "flflflflag", false, print)
+section1:AddToggle("BITCH ON", "OnTest", true, print)
 
 section2:AddKeybind("ASShoLE", "K", function() warn("NIFGFEWR") end)
 section2:AddSlider("NIGGER DOGENT?", "flfllflflflflflflag", 1, 1, 10, false, function(val) print("dogent is", val, "/ 10 nigger.") end)
@@ -1084,5 +1076,4 @@ local section3 = tab2:section("UNBLOCK ME")
 section3:AddDropdown("Exsploits", "aaa", {"Synapse", "ShitWare", "SirPedo", "UNBLOCK ME", "Elysin", "Fucksis", "KORNEL"}, warn)
 section3:AddButton("FAGGOT", function() print"ff" end)
 section3:AddTextbox("Echo", "Fla", "Dogent is a bitch", print)
-
 ]]--
