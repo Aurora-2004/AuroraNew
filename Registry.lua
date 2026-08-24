@@ -1,17 +1,15 @@
-local Registry    = {};
+local Janitor     = {};
 local Connections = {};
 
-function Registry:create(name, callback)
-    if Connections[name] then
-        Connections[name]:Disconnect();
-    end;
+function Janitor:create(name, connection)
+    assert(not Connections[name], `Connection "{name}" already exists`);
 
-    Connections[name] = callback();
+    Connections[name] = connection;
 
-    return Connections[name];
+    return connection;
 end;
 
-function Registry:remove(name)
+function Janitor:remove(name)
     local connection = Connections[name];
 
     if connection then
@@ -20,4 +18,4 @@ function Registry:remove(name)
     end;
 end;
 
-return Registry;
+return Janitor;
