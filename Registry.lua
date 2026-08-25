@@ -16,6 +16,7 @@ function Janitor:remove(name)
         connection:Disconnect();
         Connections[name] = nil;
     end;
+    return true;
 end;
 
 return Janitor;
