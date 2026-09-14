@@ -1,4 +1,5 @@
 
+
 local library = {}
 library.currentTab = nil
 library.flags = {}
@@ -81,6 +82,14 @@ function drag(frame, hold)
 		end
 	end)
 end
+
+function createPlayerList()
+  local list = {};
+  for _, PlayerInstance in next, services.Players:GetPlayers() do
+    table.insert(list, PlayerInstance);
+  end;
+  return list;
+end;
 
 function library.new(library, name)
   for _, v in next, services.CoreGui:GetChildren() do
@@ -188,6 +197,10 @@ function library.new(library, name)
   TabBtnsL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     TabBtns.CanvasSize = UDim2.new(0, 0, 0, TabBtnsL.AbsoluteContentSize.Y + 18)
   end)
+
+  function library.remove()
+    dogent:Destroy()
+  end;
   
   local window = {}
   function window.tab(window, name, icon)
@@ -869,7 +882,7 @@ function library.new(library, name)
 
       function section.AddDropdown(section, text, flag, options, callback)
         local callback = callback or function() end
-        local options = options or {}
+        local options = (options == "Players" and createPlayerList()) or options or {}
         assert(text, "No text provided")
         assert(flag, "No flag provided")
 
@@ -1000,7 +1013,7 @@ function library.new(library, name)
           local Option = Instance.new("TextButton")
           local OptionC = Instance.new("UICorner")     
 
-          Option.Name = "Option_" .. option
+          Option.Name = "Option_" .. tostring(option)
           Option.Parent = DropdownModule
           Option.BackgroundColor3 = Color3.fromRGB(37, 44, 72)
           Option.BorderSizePixel = 0
@@ -1008,7 +1021,7 @@ function library.new(library, name)
           Option.Size = UDim2.new(0, 428, 0, 26)
           Option.AutoButtonColor = false
           Option.Font = Enum.Font.Gotham
-          Option.Text = option
+          Option.Text = tostring(option)
           Option.TextColor3 = Color3.fromRGB(255, 255, 255)
           Option.TextSize = 14.000
           
@@ -1018,9 +1031,9 @@ function library.new(library, name)
 
           Option.MouseButton1Click:Connect(function()
             ToggleDropVis()
-            callback(Option.Text)
+            callback(option)
             DropdownText.Text = Option.Text
-            library.flags[flag] = Option.Text
+            library.flags[flag] = option
           end)
         end
 
@@ -1053,6 +1066,7 @@ end
 return library
 
 --[[
+
 local ui = library:new("Finishedddd")
 local tab1 = ui:tab("Hello", "6034503369")
 
@@ -1068,6 +1082,7 @@ section2:AddKeybind("ASShoLE", "K", function() warn("NIFGFEWR") end)
 section2:AddSlider("NIGGER DOGENT?", "flfllflflflflflflag", 1, 1, 10, false, function(val) print("dogent is", val, "/ 10 nigger.") end)
 
 section2:AddDropdown("Exsploits", "aaa", {"Synapse", "ShitWare", "SirPedo", "UNBLOCK ME", "Elysin", "Fucksis", "KORNEL"}, warn)
+section2:AddDropdown("Exsploits", "aaa", "Players", warn)
 section2:AddButton("FAGGOT", function() print"ff" end)
 
 local tab2 = ui:tab("Hello 2")
@@ -1076,4 +1091,5 @@ local section3 = tab2:section("UNBLOCK ME")
 section3:AddDropdown("Exsploits", "aaa", {"Synapse", "ShitWare", "SirPedo", "UNBLOCK ME", "Elysin", "Fucksis", "KORNEL"}, warn)
 section3:AddButton("FAGGOT", function() print"ff" end)
 section3:AddTextbox("Echo", "Fla", "Dogent is a bitch", print)
-]]--
+
+]]
