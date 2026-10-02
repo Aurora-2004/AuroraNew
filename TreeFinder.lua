@@ -1,4 +1,5 @@
 
+
 local Services = {};
 setmetatable(Services, {
   __index = function(_, serviceName)
@@ -7,12 +8,14 @@ setmetatable(Services, {
       Services[serviceName] = service
       return service
     end;
+	return false;
   end;
 });
 
 local Players           = Services.Players;
 local ReplicatedStorage = Services.ReplicatedStorage;
-local Player            = Players.LocalPlayer
+local HttpService       = ServicesHttpService;
+local Player            = Players.LocalPlayer;
 
 local function IsClientAlive()
   if not Player.Character then
@@ -59,18 +62,95 @@ local function SearchForLimitedTrees()
   return AvailableTrees;
 end;
 
+local WEBHOOK_URL = _G.Webhook
+
+local function SendTreeWebhook(TreeClass, JobId, Position, Credits)
+    local PlaceId = game.PlaceId
+    local InstanceId = JobId or game.JobId
+
+    local JoinScript = string.format(
+        [[game:GetService("TeleportService"):TeleportToPlaceInstance(%d, '%s', game.Players.LocalPlayer)]],
+        PlaceId,
+        InstanceId
+    )
+
+    local TeleportScript = string.format(
+        [[game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(
+            %.6f, %.6f, %.6f,
+            %.6f, %.6f, %.6f,
+            %.6f, %.6f, %.6f,
+            %.6f, %.6f, %.6f
+        )]],
+        Position:GetComponents()
+    )
+
+    -- https link so Discord renders it as clickable
+    local LaunchURL = string.format(
+        "https://www.roblox.com/games/start?placeId=%d&gameInstanceId=%s",
+        PlaceId,
+        InstanceId
+    )
+
+    local Timestamp = os.date("%d/%m/%Y | %I:%M %p")
+
+    local Embed = {
+        title = string.format("We found a %s: tree", TreeClass.Value),
+
+        description = table.concat({
+            "**Anyone can join and claim these trees!**",
+            "",
+
+            "**Launch game**",
+            string.format("[Click here](%s)", LaunchURL),
+            "",
+
+            "**Join script**",
+            "```lua",
+            JoinScript,
+            "```",
+
+            "**Teleport script**",
+            "```lua",
+            TeleportScript,
+            "```",
+
+            string.format("**%s**", Timestamp),
+            string.format("Credits: %s", Credits or "Aurora"),
+        }, "\n"),
+
+        color = 0xD2692C
+    }
+
+    local Data = {
+        username = "Aurora",
+        embeds = { Embed }
+    }
+
+    local Success, Error = pcall(function()
+        request({
+            Url = WEBHOOK_URL,
+            Method = "POST",
+            Headers = {
+                ["Content-Type"] = "application/json"
+            },
+            Body = HttpService:JSONEncode(Data)
+        })
+    end)
+
+    if not Success then
+        warn("Webhook failed:", Error)
+    end
+end
+
 CacheTreeRegions()
 
 local AvailableTrees = SearchForLimitedTrees();
 if #AvailableTrees >= 1 then
   for _, Tree in next, AvailableTrees do
     local TreeClass = Tree:FindFirstChild("TreeClass");
-    SendNotice(string.format("Found %s.", TreeClass.Value), 5)
-    if not _G.WebHook then
-      Teleport(CFrame.new(Tree:GetPivot().Position) + Vector3.new(5, 5, 5))
-      return;
-    end;
-    --send to discord when added
+    local JobId = game.JobId;
+    local Position = CFrame.new(Tree:GetPivot().Position);
+    SendTreeWebhook(TreeClass, JobId, Position)
   end;
 end;
 
@@ -80,6 +160,7 @@ end;
 
 queue_on_teleport([[
   repeat task.wait() until game:IsLoaded() and game:GetService'Players'.LocalPlayer and game:GetService'Players'.LocalPlayer.CharacterAdded;
+  task.wait(10)
   loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/Aurora-2004/AuroraNew/refs/heads/main/TreeFinder.lua"))()
 ]]);
 
