@@ -146,7 +146,7 @@ CacheTreeRegions()
 
 local AvailableTrees = SearchForLimitedTrees();
 if #AvailableTrees >= 1 then
-  if not _G.Webhook then then SendNotice("Found limited tree.") return; end;
+  if not _G.Webhook then SendNotice("Found limited tree.") return; end;
   for _, Tree in next, AvailableTrees do
     local TreeClass = Tree:FindFirstChild("TreeClass");
     local JobId = game.JobId;
