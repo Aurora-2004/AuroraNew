@@ -151,6 +151,7 @@ if #AvailableTrees >= 1 then
     local TreeClass = Tree:FindFirstChild("TreeClass");
     local JobId = game.JobId;
     local Position = CFrame.new(Tree:GetPivot().Position);
+	SendNotice("Found limited tree.")
     SendTreeWebhook(TreeClass.Value, JobId, Position)
   end;
 end;
