@@ -17,6 +17,7 @@ local TreeClasses = {
     ["Koa"]         = true,
     ["CaveCrawler"] = true,
     ["LoneCave"]    = true,
+    ["Maple"]       = Month == "November",
     ["BlueSpruce"]  = Month == "December",
     ["Spooky"]      = Month == "October",
     ["SpookyNeon"]  = Month == "October",
