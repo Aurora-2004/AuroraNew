@@ -1,3 +1,4 @@
+
 -- Aurora UI library. Requires a client runtime with permission to access CoreGui.
 local library = {}
 library.currentTab = nil
@@ -239,6 +240,39 @@ function library.new(library, name)
 	SBG.Rotation = 90
 	SBG.Name = "SBG"
 	SBG.Parent = SB
+
+    local IsMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled;
+    local Test = true;
+
+    if IsMobile or Test then
+        local MobileToggle = Instance.new("ScreenGui")
+        local ImageButton = Instance.new("ImageButton")
+        local UICorner = Instance.new("UICorner")
+        local UIStroke = Instance.new("UIStroke")
+
+        MobileToggle.Name = "MobileToggle"
+        MobileToggle.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+        MobileToggle.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+        ImageButton.Parent = MobileToggle
+        ImageButton.AnchorPoint = Vector2.new(0, 0.5)
+        ImageButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        ImageButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        ImageButton.BorderSizePixel = 0
+        ImageButton.Position = UDim2.new(0, 10, 0.5, 0)
+        ImageButton.Size = UDim2.new(0, 55, 0, 55)
+        ImageButton.Image = "rbxassetid://102393034070924"
+
+        UIStroke.Parent = ImageButton
+        UIStroke.Color = Color3.fromRGB(255, 255, 255)
+        UIStroke.BorderStrokePosition = Enum.BorderStrokePosition.Outer
+
+        UICorner.Parent = ImageButton
+
+        ImageButton.Activated:Connect(function()
+            dogent.Enabled = not dogent.Enabled
+        end);
+    end
 
 	connect(TabBtnsL:GetPropertyChangedSignal("AbsoluteContentSize"), function()
 		TabBtns.CanvasSize = UDim2.new(0, 0, 0, TabBtnsL.AbsoluteContentSize.Y + 18)
@@ -1204,4 +1238,3 @@ end
 	return window
 end;
 return library
-
