@@ -71,7 +71,8 @@ local function switchTab(new)
 end
 
 -- # Drag, Stolen from Kiriot or Wally # --
-local function drag(frame, hold, connect)
+-- touchIgnore: GuiObjects (scrolling areas) where a touch must scroll instead of dragging the frame.
+local function drag(frame, hold, connect, touchIgnore)
 	frame.Active = true
 	if not hold then
 		hold = frame
@@ -86,15 +87,32 @@ local function drag(frame, hold, connect)
 		frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 	end
 
+	local function touchIgnored(input)
+		for _, object in ipairs(touchIgnore or {}) do
+			local pos, size = object.AbsolutePosition, object.AbsoluteSize
+			if input.Position.X >= pos.X and input.Position.X <= pos.X + size.X
+				and input.Position.Y >= pos.Y and input.Position.Y <= pos.Y + size.Y then
+				return true
+			end
+		end
+		return false
+	end
+
 	connect(hold.InputBegan, function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		local isTouch = input.UserInputType == Enum.UserInputType.Touch
+		if isTouch and touchIgnored(input) then return end
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or isTouch then
 			dragging = true
 			dragStart = input.Position
 			startPos = frame.Position
+			-- A touch keeps the same InputObject for its whole life, so track it directly.
+			if isTouch then dragInput = input end
 
-			connect(input.Changed, function()
+			local changed
+			changed = input.Changed:Connect(function()
 				if input.UserInputState == Enum.UserInputState.End then
 					dragging = false
+					changed:Disconnect()
 				end
 			end)
 		end
@@ -111,6 +129,12 @@ local function drag(frame, hold, connect)
 			update(input)
 		end
 	end)
+end
+
+-- True on phones/tablets with no hardware keyboard attached.
+local function isTouchOnly()
+	local input = services.UserInputService
+	return input.TouchEnabled and not input.KeyboardEnabled
 end
 
 local function createPlayerList()
@@ -171,7 +195,24 @@ function library.new(library, name)
 	Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 	Main.Size = UDim2.new(0, 572, 0, 353)
 
-	drag(Main, nil, connect)
+	drag(Main, nil, connect, {TabMain, TabBtns})
+
+	-- Shrink the whole window to fit small screens (phones, portrait mode). Never scales above 1.
+	local MainScale = Instance.new("UIScale")
+	MainScale.Name = "MainScale"
+	MainScale.Parent = Main
+	local function fitToScreen()
+		local screen = dogent.AbsoluteSize
+		if screen.X < 1 or screen.Y < 1 then return end
+		MainScale.Scale = math.clamp(math.min((screen.X - 16) / 572, (screen.Y - 16) / 353), 0.4, 1)
+		-- Bring the window back if a rotation/resize left it off screen.
+		local center = Main.AbsolutePosition + Main.AbsoluteSize / 2
+		if center.X < 0 or center.X > screen.X or center.Y < 0 or center.Y > screen.Y then
+			Main.Position = UDim2.new(0.5, 0, 0.5, 0)
+		end
+	end
+	connect(dogent:GetPropertyChangedSignal("AbsoluteSize"), fitToScreen)
+	fitToScreen()
 
 	TabMain.Name = "TabMain"
 	TabMain.Parent = Main
@@ -241,18 +282,30 @@ function library.new(library, name)
 	SBG.Name = "SBG"
 	SBG.Parent = SB
 
-    local IsMobile = services.UserInputService.TouchEnabled and not services.UserInputService.KeyboardEnabled;
-    local Test = true;
+    local UserInputService = game:GetService("UserInputService")
+    local IsMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled;
+    local Test = true; -- set to false to only show the button on mobile
 
+    -- Remove toggles left behind by earlier loads.
+    for _, existing in ipairs(guiRoot:GetChildren()) do
+        if existing.Name == "MobileToggle" then existing:Destroy() end
+    end
+
+    local MobileToggle
     if IsMobile or Test then
-        local MobileToggle = Instance.new("ScreenGui")
+        MobileToggle = Instance.new("ScreenGui")
         local ImageButton = Instance.new("ImageButton")
         local UICorner = Instance.new("UICorner")
         local UIStroke = Instance.new("UIStroke")
 
+        if syn and syn.protect_gui then syn.protect_gui(MobileToggle) end
+
+        -- Separate ScreenGui so the button stays visible while the window is hidden.
         MobileToggle.Name = "MobileToggle"
-        MobileToggle.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+        MobileToggle.ResetOnSpawn = false
+        MobileToggle.DisplayOrder = 10
         MobileToggle.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        MobileToggle.Parent = guiRoot
 
         ImageButton.Parent = MobileToggle
         ImageButton.AnchorPoint = Vector2.new(0, 0.5)
@@ -265,13 +318,42 @@ function library.new(library, name)
 
         UIStroke.Parent = ImageButton
         UIStroke.Color = Color3.fromRGB(255, 255, 255)
-        UIStroke.BorderStrokePosition = Enum.BorderStrokePosition.Outer
+        UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        -- Newer property; skip it on clients that don't have it yet.
+        pcall(function()
+            UIStroke.BorderStrokePosition = Enum.BorderStrokePosition.Outer
+        end)
 
         UICorner.Parent = ImageButton
 
-        ImageButton.Activated:Connect(function()
+        -- Drag the button out of the way of game controls; a tap without movement toggles the window.
+        local pressInput, pressStart, buttonStart
+        local moved = false
+        connect(ImageButton.InputBegan, function(input)
+            if input.UserInputType ~= Enum.UserInputType.Touch and input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+            pressInput, pressStart, buttonStart = input, input.Position, ImageButton.Position
+            moved = false
+        end)
+        connect(UserInputService.InputChanged, function(input)
+            if not pressInput then return end
+            local sameTouch = input == pressInput
+            local mouseMove = pressInput.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.MouseMovement
+            if not sameTouch and not mouseMove then return end
+            local delta = input.Position - pressStart
+            if not moved and Vector2.new(delta.X, delta.Y).Magnitude < 8 then return end
+            moved = true
+            ImageButton.Position = UDim2.new(buttonStart.X.Scale, buttonStart.X.Offset + delta.X, buttonStart.Y.Scale, buttonStart.Y.Offset + delta.Y)
+        end)
+        connect(UserInputService.InputEnded, function(input)
+            if pressInput and (input == pressInput or input.UserInputType == pressInput.UserInputType) then
+                pressInput = nil
+            end
+        end)
+
+        connect(ImageButton.Activated, function()
+            if moved then moved = false; return end
             dogent.Enabled = not dogent.Enabled
-        end);
+        end)
     end
 
 	connect(TabBtnsL:GetPropertyChangedSignal("AbsoluteContentSize"), function()
@@ -289,6 +371,7 @@ function library.new(library, name)
 			library.currentTab = nil
 			switchingTabs = false
 		end
+		if MobileToggle then MobileToggle:Destroy() end
 		dogent:Destroy()
 	end
 	window.remove = window.Destroy
@@ -339,7 +422,10 @@ function library.new(library, name)
 		TabBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 		TabBtn.BackgroundTransparency = 1.000
 		TabBtn.BorderSizePixel = 0
-		TabBtn.Size = UDim2.new(0, 110, 0, 24)
+		-- Taller than the icon so it is easy to hit with a finger.
+		TabBtn.AnchorPoint = Vector2.new(0, 0.5)
+		TabBtn.Position = UDim2.new(0, 0, 0.5, 0)
+		TabBtn.Size = UDim2.new(0, 110, 0, 36)
 		TabBtn.AutoButtonColor = false
 		TabBtn.Font = Enum.Font.SourceSans
 		TabBtn.Text = ""
@@ -416,7 +502,9 @@ function library.new(library, name)
 			SectionToggle.Parent = SectionOpen
 			SectionToggle.BackgroundTransparency = 1
 			SectionToggle.BorderSizePixel = 0
-			SectionToggle.Size = UDim2.new(0, 26, 0, 26)
+			SectionToggle.AnchorPoint = Vector2.new(0.5, 0.5)
+			SectionToggle.Position = UDim2.new(0.5, 0, 0.5, 0)
+			SectionToggle.Size = UDim2.new(0, 40, 0, 36)
 
 			Objs.Name = "Objs"
 			Objs.Parent = Section
@@ -660,8 +748,20 @@ function library.new(library, name)
 					callback(bindKey.Name)
 				end)
 
+				-- No keyboard on phones: tapping the row runs the keybind's action instead.
+				connect(KeybindBtn.Activated, function(input)
+					if input and input.UserInputType == Enum.UserInputType.Touch then
+						callback(bindKey.Name)
+					end
+				end)
+
 				connect(KeybindValue.Activated, function()
 					if rebinding then return end
+					if isTouchOnly() then
+						-- Rebinding needs a key press, which would leave this stuck on "...".
+						callback(bindKey.Name)
+						return
+					end
 					rebinding = true
 					KeybindValue.Text = "..."
 				end)
@@ -768,10 +868,11 @@ function library.new(library, name)
 					callback(TextBox.Text)
 				end)
 
+				-- Minimum width keeps short values tappable.
 				connect(TextBox:GetPropertyChangedSignal("TextBounds"), function()
-					BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 30, 0, 28)
+					BoxBG.Size = UDim2.new(0, math.max(TextBox.TextBounds.X + 30, 60), 0, 28)
 				end)
-				BoxBG.Size = UDim2.new(0, TextBox.TextBounds.X + 30, 0, 28)
+				BoxBG.Size = UDim2.new(0, math.max(TextBox.TextBounds.X + 30, 60), 0, 28)
 			end
 
 			function section.AddSlider(section, text, flag, default, min, max, precise, callback)
@@ -880,8 +981,9 @@ function library.new(library, name)
 				MinSlider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 				MinSlider.BackgroundTransparency = 1.000
 				MinSlider.BorderSizePixel = 0
-				MinSlider.Position = UDim2.new(0.296728969, 40, 0.236842096, 0)
-				MinSlider.Size = UDim2.new(0, 20, 0, 20)
+				MinSlider.AnchorPoint = Vector2.new(0.5, 0.5)
+				MinSlider.Position = UDim2.new(0, 177, 0.5, 0)
+				MinSlider.Size = UDim2.new(0, 28, 0, 38)
 				MinSlider.Font = Enum.Font.Gotham
 				MinSlider.Text = "-"
 				MinSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -890,12 +992,12 @@ function library.new(library, name)
 
 				AddSlider.Name = "AddSlider"
 				AddSlider.Parent = SliderModule
-				AddSlider.AnchorPoint = Vector2.new(0, 0.5)
+				AddSlider.AnchorPoint = Vector2.new(0.5, 0.5)
 				AddSlider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 				AddSlider.BackgroundTransparency = 1.000
 				AddSlider.BorderSizePixel = 0
-				AddSlider.Position = UDim2.new(0.810906529, 0, 0.5, 0)
-				AddSlider.Size = UDim2.new(0, 20, 0, 20)
+				AddSlider.Position = UDim2.new(0, 357, 0.5, 0)
+				AddSlider.Size = UDim2.new(0, 28, 0, 38)
 				AddSlider.Font = Enum.Font.Gotham
 				AddSlider.Text = "+"
 				AddSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -939,22 +1041,51 @@ function library.new(library, name)
 					["-"] = true
 				}
 
-				connect(SliderBar.InputBegan, function(input)
+				-- The bar is only 12px tall, so a taller invisible strip catches mouse and finger input.
+				local SliderHit = Instance.new("Frame")
+				SliderHit.Name = "SliderHit"
+				SliderHit.Parent = SliderBar
+				SliderHit.AnchorPoint = Vector2.new(0.5, 0.5)
+				SliderHit.BackgroundTransparency = 1
+				SliderHit.BorderSizePixel = 0
+				SliderHit.Position = UDim2.new(0.5, 0, 0.5, 0)
+				SliderHit.Size = UDim2.new(1, 10, 0, 36)
+
+				local dragTouch
+				local function setFromX(x)
+					local percent = math.clamp((x - SliderBar.AbsolutePosition.X) / math.max(SliderBar.AbsoluteSize.X, 1), 0, 1)
+					funcs:SetValue(min + (max - min) * percent)
+				end
+				local function stopDrag()
+					dragging = false
+					dragTouch = nil
+					Tab.ScrollingEnabled = true
+				end
+
+				connect(SliderHit.InputBegan, function(input)
 					if input.UserInputType == Enum.UserInputType.MouseButton1 then
-						funcs:SetValue()
 						dragging = true
+						setFromX(input.Position.X)
+					elseif input.UserInputType == Enum.UserInputType.Touch and not dragTouch then
+						dragging = true
+						dragTouch = input
+						-- Stop the tab from scrolling while a finger is dragging the slider.
+						Tab.ScrollingEnabled = false
+						setFromX(input.Position.X)
 					end
 				end)
 
 				connect(services.UserInputService.InputEnded, function(input)
-					if dragging and input.UserInputType == Enum.UserInputType.MouseButton1 then
-						dragging = false
+					if not dragging then return end
+					if input == dragTouch or (not dragTouch and input.UserInputType == Enum.UserInputType.MouseButton1) then
+						stopDrag()
 					end
 				end)
 
 				connect(services.UserInputService.InputChanged, function(input)
-					if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-						funcs:SetValue()
+					if not dragging then return end
+					if input == dragTouch or (not dragTouch and input.UserInputType == Enum.UserInputType.MouseMovement) then
+						setFromX(input.Position.X)
 					end
 				end)
 
@@ -1177,6 +1308,16 @@ function library.new(library, name)
 		if changed and not silent then notify() end
 	end
 	connect(arrow.Activated, function() funcs:SetOpen(not open) end)
+	-- On phones, tapping the header would focus the search box and pop the on-screen keyboard
+	-- over the list. Cover it with a button that just opens/closes the list instead.
+	if isTouchOnly() then
+		summary.TextEditable = false
+		local touchOpen = make("TextButton", "TouchOpen", header, {
+			Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, BorderSizePixel = 0,
+			Text = "", AutoButtonColor = false, ZIndex = 5,
+		})
+		connect(touchOpen.Activated, function() funcs:SetOpen(not open) end)
+	end
 	connect(summary.Focused, function()
 		editing = true
 		queryText = ""
@@ -1237,4 +1378,85 @@ end
 	end
 	return window
 end;
+
+--[[ ===================== USAGE =====================
+
+	local window  = library:new("Title")              -- one window at a time; a new one replaces the old
+	local tab     = window:tab("Tab name", iconId)    -- iconId is optional
+	local section = tab:section("Section name")
+
+	section:AddButton(text, callback)
+	section:AddToggle(text, flag, enabled, callback)                    -- callback(state)
+	section:AddKeybind(text, defaultKey, callback)                      -- defaultKey: "F" or Enum.KeyCode.F
+	section:AddTextbox(text, flag, defaultText, callback)               -- callback(text)
+	section:AddSlider(text, flag, default, min, max, precise, callback) -- callback(number)
+	section:AddDropdown(text, flag, options, callback, multiSelect)     -- options: table, or "Players"
+
+	Current values live in library.flags[flag].
+	The dropdown returns an object: :GetValue() :SetValue(v) :Clear() :AddOption(v) :RemoveOption(v) :SetOptions(t)
+	window:Destroy() removes the window and the mobile toggle button.
+
+	Set RUN_DEMO to false before loading this file as a library from another script.
+]]
+
+local RUN_DEMO = false
+
+if RUN_DEMO then
+	local window = library:new("Aurora Test")
+
+	local main = window:tab("Main")
+	local controls = main:section("Controls")
+
+	controls:AddButton("Print hello", function()
+		print("[demo] button clicked")
+	end)
+
+	controls:AddToggle("Test toggle", "demoToggle", false, function(state)
+		print("[demo] toggle:", state)
+	end)
+
+	controls:AddKeybind("Test keybind", "F", function(key)
+		print("[demo] keybind:", key)
+	end)
+
+	controls:AddTextbox("Test textbox", "demoText", "hello", function(text)
+		print("[demo] textbox:", text)
+	end)
+
+	controls:AddSlider("Test slider", "demoSlider", 50, 0, 100, false, function(value)
+		print("[demo] slider:", value)
+	end)
+
+	local lists = main:section("Dropdowns")
+
+	local fruit = lists:AddDropdown("Fruit", "demoFruit", {"Apple", "Banana", "Cherry"}, function(value)
+		print("[demo] fruit:", value)
+	end)
+
+	lists:AddDropdown("Colors (multi)", "demoColors", {"Red", "Green", "Blue"}, function(selected)
+		print("[demo] colors:", table.concat(selected, ", "))
+	end, true)
+
+	lists:AddDropdown("Player", "demoPlayer", "Players", function(player)
+		print("[demo] player:", player)
+	end)
+
+	local misc = window:tab("Misc")
+	local tools = misc:section("Tools")
+
+	tools:AddButton("Set fruit to Banana", function()
+		fruit:SetValue("Banana")
+	end)
+
+	tools:AddButton("Print all flags", function()
+		for flag, value in pairs(library.flags) do
+			print("[demo] flag", flag, "=", value)
+		end
+	end)
+
+	tools:AddButton("Destroy UI", function()
+		window:Destroy()
+	end)
+end
+
 return library
