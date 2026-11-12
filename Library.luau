@@ -241,7 +241,7 @@ function library.new(library, name)
 	SBG.Name = "SBG"
 	SBG.Parent = SB
 
-    local IsMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled;
+    local IsMobile = services.UserInputService.TouchEnabled and not services.UserInputService.KeyboardEnabled;
     local Test = true;
 
     if IsMobile or Test then
