@@ -284,7 +284,7 @@ function library.new(library, name)
 
     local UserInputService = game:GetService("UserInputService")
     local IsMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled;
-    local Test = true; -- set to false to only show the button on mobile
+    local Test = false; -- set to false to only show the button on mobile
 
     -- Remove toggles left behind by earlier loads.
     for _, existing in ipairs(guiRoot:GetChildren()) do
