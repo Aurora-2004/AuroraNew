@@ -16,7 +16,7 @@
 
 	Quick start:
 		local Library = loadstring(readfile("UmbraUI/Library.lua"))()
-		local Window  = Library:CreateWindow({ Title = "My Hub", SubTitle = "Lumber Tycoon 2", Theme = "Venyx" })
+		local Window  = Library:CreateWindow({ Title = "My Hub", SubTitle = "Lumber Tycoon 2", Theme = "Nord" })
 		local Tab     = Window:CreateTab({ Name = "Player", Icon = "rbxassetid://..." })
 		local Section = Tab:CreateSection("Movement")
 		Section:CreateToggle({ Name = "Fly", Default = false, Flag = "Fly", Callback = function(v) end })
@@ -79,143 +79,6 @@ end
 
 local rgb = Color3.fromRGB
 
--- Default theme: Venyx (colours from the Venyx UI library)
---   Background 24 / Accent 10 / LightContrast 20 / DarkContrast 14 / TextColor 255
-Library:AddTheme("Venyx", {
-	Background   = rgb(24, 24, 24),    -- Venyx Background
-	Topbar       = rgb(10, 10, 10),    -- Venyx Accent (title bar)
-	Sidebar      = rgb(14, 14, 14),    -- Venyx DarkContrast (page list)
-	Content      = rgb(24, 24, 24),    -- Venyx Background (behind sections)
-	Section      = rgb(20, 20, 20),    -- Venyx LightContrast (sections)
-	Element      = rgb(14, 14, 14),    -- Venyx DarkContrast (buttons / toggles / sliders)
-	ElementHover = rgb(30, 30, 30),
-	TabSelected  = rgb(20, 20, 20),
-	Input        = rgb(20, 20, 20),    -- Venyx LightContrast (textbox / keybind fields)
-	ToggleOff    = rgb(26, 26, 26),    -- toggle / slider track
-	ToggleOn     = rgb(70, 70, 70),
-	Knob         = rgb(255, 255, 255), -- Venyx TextColor
-	Accent       = rgb(255, 255, 255), -- slider fill
-	Text         = rgb(255, 255, 255), -- Venyx TextColor
-	SubText      = rgb(160, 160, 160),
-	Stroke       = rgb(36, 36, 36),
-})
-
--- Dark navy / slate
-Library:AddTheme("Dark", {
-	Background   = rgb(26, 28, 38),
-	Topbar       = rgb(22, 24, 33),
-	Sidebar      = rgb(26, 28, 38),
-	Content      = rgb(32, 34, 46),
-	Section      = rgb(37, 39, 53),
-	Element      = rgb(44, 47, 63),
-	ElementHover = rgb(53, 56, 75),
-	TabSelected  = rgb(44, 47, 63),
-	Input        = rgb(33, 35, 48),
-	ToggleOff    = rgb(17, 18, 26),
-	ToggleOn     = rgb(108, 118, 255),
-	Knob         = rgb(245, 246, 250),
-	Accent       = rgb(108, 118, 255),
-	Text         = rgb(236, 238, 245),
-	SubText      = rgb(150, 154, 175),
-	Stroke       = rgb(60, 64, 84),
-})
-
-Library:AddTheme("Midnight", {
-	Background   = rgb(14, 17, 28),
-	Topbar       = rgb(10, 12, 21),
-	Section      = rgb(20, 24, 39),
-	Element      = rgb(27, 32, 51),
-	ElementHover = rgb(34, 40, 62),
-	TabSelected  = rgb(27, 32, 51),
-	Input        = rgb(17, 20, 33),
-	ToggleOff    = rgb(12, 14, 24),
-	Knob         = rgb(235, 240, 255),
-	Accent       = rgb(80, 145, 255),
-	Text         = rgb(230, 235, 250),
-	SubText      = rgb(130, 140, 170),
-	Stroke       = rgb(38, 45, 70),
-})
-
-Library:AddTheme("Amethyst", {
-	Background   = rgb(22, 17, 30),
-	Topbar       = rgb(16, 12, 23),
-	Section      = rgb(30, 23, 41),
-	Element      = rgb(40, 31, 54),
-	ElementHover = rgb(49, 38, 66),
-	TabSelected  = rgb(40, 31, 54),
-	Input        = rgb(26, 20, 36),
-	ToggleOff    = rgb(17, 13, 24),
-	Knob         = rgb(245, 238, 255),
-	Accent       = rgb(170, 110, 255),
-	Text         = rgb(240, 232, 250),
-	SubText      = rgb(160, 145, 180),
-	Stroke       = rgb(55, 43, 72),
-})
-
-Library:AddTheme("Emerald", {
-	Background   = rgb(16, 22, 20),
-	Topbar       = rgb(11, 16, 14),
-	Section      = rgb(22, 30, 27),
-	Element      = rgb(29, 40, 36),
-	ElementHover = rgb(36, 50, 45),
-	TabSelected  = rgb(29, 40, 36),
-	Input        = rgb(19, 26, 23),
-	ToggleOff    = rgb(12, 17, 15),
-	Knob         = rgb(235, 250, 243),
-	Accent       = rgb(60, 200, 135),
-	Text         = rgb(230, 245, 238),
-	SubText      = rgb(135, 165, 150),
-	Stroke       = rgb(40, 56, 50),
-})
-
-Library:AddTheme("Crimson", {
-	Background   = rgb(24, 16, 17),
-	Topbar       = rgb(18, 11, 12),
-	Section      = rgb(32, 21, 23),
-	Element      = rgb(43, 28, 30),
-	ElementHover = rgb(54, 35, 37),
-	TabSelected  = rgb(43, 28, 30),
-	Input        = rgb(28, 18, 20),
-	ToggleOff    = rgb(18, 12, 13),
-	Knob         = rgb(255, 240, 240),
-	Accent       = rgb(235, 70, 85),
-	Text         = rgb(248, 234, 235),
-	SubText      = rgb(175, 145, 148),
-	Stroke       = rgb(60, 40, 42),
-})
-
-Library:AddTheme("Ocean", {
-	Background   = rgb(15, 23, 28),
-	Topbar       = rgb(10, 17, 21),
-	Section      = rgb(20, 31, 38),
-	Element      = rgb(27, 41, 50),
-	ElementHover = rgb(34, 51, 62),
-	TabSelected  = rgb(27, 41, 50),
-	Input        = rgb(18, 27, 33),
-	ToggleOff    = rgb(11, 18, 22),
-	Knob         = rgb(235, 248, 255),
-	Accent       = rgb(40, 190, 220),
-	Text         = rgb(228, 242, 248),
-	SubText      = rgb(130, 160, 175),
-	Stroke       = rgb(37, 56, 67),
-})
-
-Library:AddTheme("Light", {
-	Background   = rgb(238, 239, 243),
-	Topbar       = rgb(225, 227, 233),
-	Section      = rgb(248, 248, 251),
-	Element      = rgb(232, 233, 239),
-	ElementHover = rgb(222, 224, 232),
-	TabSelected  = rgb(225, 227, 235),
-	Input        = rgb(245, 246, 250),
-	ToggleOff    = rgb(200, 202, 212),
-	Knob         = rgb(255, 255, 255),
-	Accent       = rgb(90, 100, 245),
-	Text         = rgb(30, 30, 38),
-	SubText      = rgb(105, 108, 122),
-	Stroke       = rgb(210, 212, 222),
-})
-
 Library:AddTheme("Pink", {
 	Background   = rgb(214, 108, 220),
 	Topbar       = rgb(192, 70, 200),  -- title bar
@@ -235,8 +98,208 @@ Library:AddTheme("Pink", {
 	Stroke       = rgb(240, 165, 244),
 })
 
-Library.CurrentTheme = Library.Themes.Venyx
-Library.CurrentThemeName = "Venyx"
+-- Default theme. Nord palette, matched to Potassium's Nord theme (#292e39 / #2e3440, Frost #88c0d0)
+Library:AddTheme("Nord", {
+	Background   = rgb(41, 46, 57),
+	Topbar       = rgb(36, 41, 51),
+	Sidebar      = rgb(46, 52, 64),
+	Content      = rgb(41, 46, 57),
+	Section      = rgb(46, 52, 64),
+	Element      = rgb(51, 57, 71),
+	ElementHover = rgb(59, 66, 82),
+	TabSelected  = rgb(59, 66, 82),
+	Input        = rgb(36, 41, 51),
+	ToggleOff    = rgb(36, 41, 51),
+	ToggleOn     = rgb(136, 192, 208),
+	Knob         = rgb(236, 239, 244),
+	Accent       = rgb(136, 192, 208),
+	Text         = rgb(236, 239, 244),
+	SubText      = rgb(163, 171, 186),
+	Stroke       = rgb(67, 76, 94),
+})
+
+-- Amber: warm charcoal, gold accent
+Library:AddTheme("Amber", {
+	Background   = rgb(31, 28, 23),
+	Topbar       = rgb(17, 16, 13),
+	Sidebar      = rgb(39, 36, 30),
+	Content      = rgb(31, 28, 23),
+	Section      = rgb(39, 36, 30),
+	Element      = rgb(49, 45, 37),
+	ElementHover = rgb(64, 59, 48),
+	TabSelected  = rgb(60, 55, 45),
+	Input        = rgb(22, 20, 16),
+	ToggleOff    = rgb(19, 17, 14),
+	ToggleOn     = rgb(245, 184, 62),
+	Knob         = rgb(246, 245, 243),
+	Accent       = rgb(245, 184, 62),
+	Text         = rgb(242, 240, 238),
+	SubText      = rgb(176, 167, 150),
+	Stroke       = rgb(73, 67, 55),
+})
+
+-- Crimson: red-tinted charcoal, red accent
+Library:AddTheme("Crimson", {
+	Background   = rgb(32, 21, 23),
+	Topbar       = rgb(18, 12, 13),
+	Sidebar      = rgb(41, 28, 29),
+	Content      = rgb(32, 21, 23),
+	Section      = rgb(41, 28, 29),
+	Element      = rgb(52, 35, 37),
+	ElementHover = rgb(67, 45, 48),
+	TabSelected  = rgb(63, 42, 45),
+	Input        = rgb(23, 15, 16),
+	ToggleOff    = rgb(20, 13, 14),
+	ToggleOn     = rgb(237, 66, 86),
+	Knob         = rgb(247, 243, 243),
+	Accent       = rgb(237, 66, 86),
+	Text         = rgb(243, 237, 237),
+	SubText      = rgb(176, 150, 154),
+	Stroke       = rgb(77, 51, 54),
+})
+
+-- Dark: neutral charcoal, indigo accent
+Library:AddTheme("Dark", {
+	Background   = rgb(24, 25, 29),
+	Topbar       = rgb(14, 14, 17),
+	Sidebar      = rgb(31, 32, 38),
+	Content      = rgb(24, 25, 29),
+	Section      = rgb(31, 32, 38),
+	Element      = rgb(39, 41, 47),
+	ElementHover = rgb(51, 53, 61),
+	TabSelected  = rgb(48, 49, 57),
+	Input        = rgb(17, 18, 21),
+	ToggleOff    = rgb(15, 16, 18),
+	ToggleOn     = rgb(112, 122, 255),
+	Knob         = rgb(244, 244, 246),
+	Accent       = rgb(112, 122, 255),
+	Text         = rgb(238, 239, 241),
+	SubText      = rgb(155, 158, 171),
+	Stroke       = rgb(58, 60, 69),
+})
+
+-- Forest: green-tinted charcoal, green accent
+Library:AddTheme("Forest", {
+	Background   = rgb(22, 32, 27),
+	Topbar       = rgb(13, 18, 15),
+	Sidebar      = rgb(28, 41, 34),
+	Content      = rgb(22, 32, 27),
+	Section      = rgb(28, 41, 34),
+	Element      = rgb(36, 51, 43),
+	ElementHover = rgb(46, 66, 56),
+	TabSelected  = rgb(43, 62, 52),
+	Input        = rgb(16, 23, 19),
+	ToggleOff    = rgb(14, 20, 17),
+	ToggleOn     = rgb(70, 200, 120),
+	Knob         = rgb(243, 247, 245),
+	Accent       = rgb(70, 200, 120),
+	Text         = rgb(237, 242, 240),
+	SubText      = rgb(150, 176, 163),
+	Stroke       = rgb(52, 75, 64),
+})
+
+-- Grape: purple-tinted charcoal, violet accent
+Library:AddTheme("Grape", {
+	Background   = rgb(27, 21, 33),
+	Topbar       = rgb(16, 12, 19),
+	Sidebar      = rgb(35, 27, 42),
+	Content      = rgb(27, 21, 33),
+	Section      = rgb(35, 27, 42),
+	Element      = rgb(44, 34, 53),
+	ElementHover = rgb(57, 44, 68),
+	TabSelected  = rgb(53, 41, 64),
+	Input        = rgb(19, 15, 23),
+	ToggleOff    = rgb(17, 13, 20),
+	ToggleOn     = rgb(168, 108, 255),
+	Knob         = rgb(245, 243, 247),
+	Accent       = rgb(168, 108, 255),
+	Text         = rgb(240, 237, 243),
+	SubText      = rgb(164, 150, 176),
+	Stroke       = rgb(65, 50, 78),
+})
+
+-- Light: soft grey, indigo accent
+Library:AddTheme("Light", {
+	Background   = rgb(242, 243, 246),
+	Topbar       = rgb(222, 224, 230),
+	Sidebar      = rgb(232, 234, 239),
+	Content      = rgb(242, 243, 246),
+	Section      = rgb(252, 252, 253),
+	Element      = rgb(238, 239, 243),
+	ElementHover = rgb(228, 230, 236),
+	TabSelected  = rgb(218, 221, 229),
+	Input        = rgb(255, 255, 255),
+	ToggleOff    = rgb(198, 201, 210),
+	ToggleOn     = rgb(88, 101, 242),
+	Knob         = rgb(255, 255, 255),
+	Accent       = rgb(88, 101, 242),
+	Text         = rgb(26, 27, 34),
+	SubText      = rgb(102, 106, 120),
+	Stroke       = rgb(210, 213, 221),
+})
+
+-- Midnight: deep navy, blue accent
+Library:AddTheme("Midnight", {
+	Background   = rgb(13, 17, 27),
+	Topbar       = rgb(6, 7, 12),
+	Sidebar      = rgb(19, 23, 38),
+	Content      = rgb(13, 17, 27),
+	Section      = rgb(19, 23, 38),
+	Element      = rgb(24, 30, 50),
+	ElementHover = rgb(33, 41, 67),
+	TabSelected  = rgb(30, 38, 62),
+	Input        = rgb(8, 10, 17),
+	ToggleOff    = rgb(7, 8, 14),
+	ToggleOn     = rgb(84, 140, 255),
+	Knob         = rgb(243, 244, 247),
+	Accent       = rgb(84, 140, 255),
+	Text         = rgb(237, 238, 243),
+	SubText      = rgb(150, 156, 176),
+	Stroke       = rgb(38, 47, 77),
+})
+
+-- Ocean: teal-tinted charcoal, cyan accent
+Library:AddTheme("Ocean", {
+	Background   = rgb(20, 30, 34),
+	Topbar       = rgb(11, 17, 19),
+	Sidebar      = rgb(25, 39, 43),
+	Content      = rgb(20, 30, 34),
+	Section      = rgb(25, 39, 43),
+	Element      = rgb(32, 49, 55),
+	ElementHover = rgb(42, 63, 71),
+	TabSelected  = rgb(39, 59, 66),
+	Input        = rgb(14, 21, 24),
+	ToggleOff    = rgb(12, 19, 21),
+	ToggleOn     = rgb(44, 192, 222),
+	Knob         = rgb(243, 246, 247),
+	Accent       = rgb(44, 192, 222),
+	Text         = rgb(237, 241, 243),
+	SubText      = rgb(150, 169, 176),
+	Stroke       = rgb(47, 71, 80),
+})
+
+-- Sunset: warm charcoal, orange accent
+Library:AddTheme("Sunset", {
+	Background   = rgb(32, 25, 22),
+	Topbar       = rgb(18, 14, 13),
+	Sidebar      = rgb(41, 32, 28),
+	Content      = rgb(32, 25, 22),
+	Section      = rgb(41, 32, 28),
+	Element      = rgb(51, 40, 36),
+	ElementHover = rgb(66, 52, 46),
+	TabSelected  = rgb(62, 49, 43),
+	Input        = rgb(23, 18, 16),
+	ToggleOff    = rgb(20, 15, 14),
+	ToggleOn     = rgb(255, 134, 72),
+	Knob         = rgb(247, 244, 243),
+	Accent       = rgb(255, 134, 72),
+	Text         = rgb(242, 239, 237),
+	SubText      = rgb(176, 158, 150),
+	Stroke       = rgb(75, 59, 52),
+})
+
+Library.CurrentTheme = Library.Themes.Nord
+Library.CurrentThemeName = "Nord"
 
 --==============================================================--
 -- Helpers
@@ -947,14 +1010,19 @@ function Section:CreateSlider(opts)
 	local row = NewRow(self, 56)
 	RowLabel(row, opts.Name or "Slider", 80).Size = UDim2.new(1, -92, 0, 34)
 
-	local valueLabel = Bind(Create("TextLabel", {
+	-- A TextBox so the value can be typed as well as dragged.
+	local valueLabel = Bind(Create("TextBox", {
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -12, 0, 0),
-		Size = UDim2.new(0, 80, 0, 34),
+		Position = UDim2.new(1, -12, 0, 2),
+		Size = UDim2.new(0, 80, 0, 28),
 		BackgroundTransparency = 1,
 		Font = Enum.Font.GothamBold,
 		TextSize = 14,
+		Text = "",
+		PlaceholderText = "",
+		ClearTextOnFocus = false,
 		TextXAlignment = Enum.TextXAlignment.Right,
+		ZIndex = 3,
 		Parent = row,
 	}), { TextColor3 = "SubText" })
 
@@ -1001,8 +1069,26 @@ function Section:CreateSlider(opts)
 		local pct = (max == min) and 0 or (Slider.Value - min) / (max - min)
 		Tween(fill, time or 0.1, { Size = UDim2.fromScale(pct, 1) })
 		Tween(knob, time or 0.1, { Position = UDim2.fromScale(pct, 0.5) })
-		valueLabel.Text = string.format("%." .. decimals .. "f", Slider.Value) .. suffix
+		if not valueLabel:IsFocused() then
+			valueLabel.Text = string.format("%." .. decimals .. "f", Slider.Value) .. suffix
+		end
 	end
+
+	-- Typing: show the bare number while editing, apply it on Enter / click-away.
+	valueLabel.Focused:Connect(function()
+		valueLabel.Text = string.format("%." .. decimals .. "f", Slider.Value)
+		valueLabel.CursorPosition = #valueLabel.Text + 1
+		valueLabel.SelectionStart = 1
+	end)
+
+	valueLabel.FocusLost:Connect(function()
+		local typed = tonumber((valueLabel.Text:gsub(",", "."):match("%-?%d*%.?%d+")))
+		if typed then
+			Slider:Set(typed)
+		else
+			render()
+		end
+	end)
 
 	function Slider:Set(v)
 		v = math.clamp(tonumber(v) or min, min, max)
