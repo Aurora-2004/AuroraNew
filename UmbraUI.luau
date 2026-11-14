@@ -39,6 +39,7 @@ local Library = {
 	CurrentThemeName = nil,
 	ConfigFolder = "UmbraUI",
 
+	_defaults       = {},   -- Flag -> value the element was created with
 	_bindings       = {},
 	_themeCallbacks = {},
 	_connections    = {},
@@ -793,6 +794,38 @@ local function Decode(v)
 	return out
 end
 
+-- Sets the theme through the theme selector (when there is one) so its dropdown stays in sync.
+local function ApplyTheme(name)
+	if not (name and Library.Themes[name]) then return end
+	if Library._themeSelector then
+		Library._themeSelector:Set(name)
+	else
+		Library:SetTheme(name)
+	end
+end
+
+-- The config that LoadAutoConfig loads on the next execution is remembered by name in this file.
+local function AutoConfigPath()
+	return Library.ConfigFolder .. "/autoload.txt"
+end
+
+-- Creates the config folder when it is missing. Works on executors without isfolder too.
+local function EnsureFolder()
+	if not makefolder then return end
+	local ok, exists = pcall(function()
+		return isfolder and isfolder(Library.ConfigFolder)
+	end)
+	if not (ok and exists) then
+		pcall(makefolder, Library.ConfigFolder)
+	end
+end
+
+local function SetAutoConfig(name)
+	if not writefile then return end
+	EnsureFolder()
+	pcall(writefile, AutoConfigPath(), name or "")
+end
+
 function Library:SaveConfig(name)
 	if not writefile then
 		return warn("[UmbraUI] writefile is not supported")
@@ -801,10 +834,16 @@ function Library:SaveConfig(name)
 	for flag, el in pairs(self.Elements) do
 		data[flag] = Encode(el.Value)
 	end
-	if isfolder and not isfolder(self.ConfigFolder) then
-		makefolder(self.ConfigFolder)
+	EnsureFolder()
+	local path = self.ConfigFolder .. "/" .. (name or "default") .. ".json"
+	local ok, err = pcall(function()
+		writefile(path, HttpService:JSONEncode(data))
+	end)
+	if not ok then
+		return warn("[UmbraUI] Failed to save config: " .. path .. " (" .. tostring(err) .. ")")
 	end
-	writefile(self.ConfigFolder .. "/" .. (name or "default") .. ".json", HttpService:JSONEncode(data))
+	SetAutoConfig(name or "default")
+	return true
 end
 
 function Library:LoadConfig(name)
@@ -821,15 +860,55 @@ function Library:LoadConfig(name)
 	if not ok then
 		return warn("[UmbraUI] Failed to read config: " .. path)
 	end
-	if data.__theme and self.Themes[data.__theme] then
-		self:SetTheme(data.__theme)
-	end
+	ApplyTheme(data.__theme)
 	for flag, value in pairs(data) do
 		local el = self.Elements[flag]
 		if el and el.Set then
 			el:Set(Decode(value))
 		end
 	end
+	SetAutoConfig(name or "default")
+	return true
+end
+
+-- Loads the config that was last saved / loaded. Call it once, after every element is created.
+function Library:LoadAutoConfig()
+	if not (readfile and isfile) then return end
+	local ok, name = pcall(function()
+		local path = AutoConfigPath()
+		return isfile(path) and readfile(path) or nil
+	end)
+	if not ok or not name or name == "" then return end
+	if not isfile(self.ConfigFolder .. "/" .. name .. ".json") then return end
+	return self:LoadConfig(name)
+end
+
+-- Puts every flagged element (and the theme) back to the value it was created with.
+-- Saved config files are kept, but nothing is auto-loaded again until a config is saved or loaded.
+-- Elements that already hold their default are left alone, so their callbacks don't fire for nothing.
+local function SameValue(a, b)
+	if typeof(a) ~= "table" or typeof(b) ~= "table" then
+		return a == b
+	end
+	if #a ~= #b then return false end
+	for k, v in pairs(a) do
+		if b[k] ~= v then return false end
+	end
+	for k in pairs(b) do
+		if a[k] == nil then return false end
+	end
+	return true
+end
+
+function Library:ResetConfig()
+	ApplyTheme(self._defaultTheme)
+	for flag, el in pairs(self.Elements) do
+		local default = self._defaults[flag]
+		if el.Set and not SameValue(el.Value, default) then
+			el:Set(typeof(default) == "table" and table.clone(default) or default)
+		end
+	end
+	SetAutoConfig("")
 end
 
 --==============================================================--
@@ -842,6 +921,9 @@ local function RegisterFlag(flag, element)
 	if flag then
 		Library.Elements[flag] = element
 		Library.Flags[flag] = element.Value
+		-- remembered for Library:ResetConfig()
+		local value = element.Value
+		Library._defaults[flag] = typeof(value) == "table" and table.clone(value) or value
 	end
 end
 
@@ -1993,7 +2075,7 @@ end
 
 -- Handy built-in: theme picker dropdown
 function Section:CreateThemeSelector(name)
-	return self:CreateDropdown({
+	local selector = self:CreateDropdown({
 		Name = name or "Theme",
 		Options = Library:GetThemes(),
 		Default = Library.CurrentThemeName,
@@ -2001,6 +2083,8 @@ function Section:CreateThemeSelector(name)
 			if theme then Library:SetTheme(theme) end
 		end,
 	})
+	Library._themeSelector = selector
+	return selector
 end
 
 -- "Add" aliases (Section:AddToggle == Section:CreateToggle, etc.)
@@ -2064,6 +2148,7 @@ local TOPBAR_HEIGHT = 58
 function Library:CreateWindow(opts)
 	opts = opts or {}
 	if opts.Theme then self:SetTheme(opts.Theme) end
+	self._defaultTheme = self.CurrentThemeName
 
 	-- Default size scales with the screen (about a third of its width) so it is never tiny
 	local camera = workspace.CurrentCamera
